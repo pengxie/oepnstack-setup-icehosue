@@ -2,12 +2,25 @@
 controller: 10.10.6.25
 network: 10.10.6.25
 compute: 10.10.6.26
+compute_network: 10.10.9.16
+
+gateway: 10.10.9.1
+controller_br_ex_address: 10.10.9.15
+compute_br_ex_address: 10.10.9.16
 
 password: aixocm
 keystone_dbpass: aixocm
 rabbit_pass: aixocm
 ADMIN_PASS: aixocm
+glance_dbpass: aixocm
+glance_pass: aixocm
+nova_dbpass: aixocm
+nova_pass: aixocm
+neutron_dbpass: aixocm
+neutron_pass: aixocm
+
 EMAIL_ADDRESS: pengxie@anjuke.com
+DEMO_PASS: aixocm
 
 NTP_SERVER: 10.10.6.130
 

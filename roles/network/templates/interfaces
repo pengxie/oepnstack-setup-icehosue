@@ -1,0 +1,27 @@
+auto lo
+iface lo inet loopback
+
+auto eth1
+iface eth1 inet manual
+        up ip address add 0/0 dev $IFACE
+        up ip link set $IFACE up
+        down ip link set $IFACE down
+
+auto br-eth1
+iface br-eth1 inet static
+address {{ network }}
+netmask 255.255.255.0
+
+auto eth0
+iface eth0 inet manual
+        up ip address add 0/0 dev $IFACE
+        up ip link set $IFACE up
+        down ip link set $IFACE down
+
+auto br-ex
+iface br-ex inet static
+address {{ controller_br_ex_address }}
+netmask 255.255.255.0
+gateway {{ gateway }}
+dns-nameservers 10.10.6.135
+dns-search i.ajkdns.com

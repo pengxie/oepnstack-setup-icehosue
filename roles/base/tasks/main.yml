@@ -35,6 +35,6 @@
 #- name : install 13.01 kernel
 #  apt: pkg={{ item }}
 #       state=present
-#  with_item:
+#  with_items:
 #   - linux-image-generic-lts-saucy 
 #   - linux-headers-generic-lts-saucy

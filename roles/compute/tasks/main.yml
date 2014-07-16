@@ -13,6 +13,62 @@
   service: name=ntp
   	       state=present
 
-- name: install python-mysqldb 
+- name: install python-mysqldb - nova
   apt: pkg=python-mysqldb 
        state=present
+
+- name: install nova-compute
+  apt: pkg=nova-compute
+       state=present
+
+- name: delete nova sqlite
+  file: dest=/var/lib/nvoa/nova.sqlite
+        state=absent
+
+- name: copy nova.conf
+  template: src=nova.conf
+            dest=/etc/nova
+
+- name: copy sysctl.conf
+  file: src=sysctl.conf
+        dest=/etc
+        state=present
+
+- name: sysctl effective
+  command: sysctl -p
+
+- name: install the Networking components
+  apt: pkg={{ item }}
+       state=present
+  with_items:
+   - neutron-common
+   - neutron-plugin-ml2
+   - neutron-plugin-openvswitch-agent
+   - openvswitch-datapath-dkms
+
+- name: copy neutron.conf and ml2_agent.ini
+  template: src={{ item.name }}
+            dest={{ item.dest }}
+  with_items:
+   - { name: 'neutron.conf', dest: '/etc/neutron' }
+   - { name: 'ml2_agent.ini', dest: '/etc/neutron/plugins/' }
+
+- name: restart services
+  service: name={{ item }}
+           state=restarted
+  with_items:
+   - nova-compute
+   - neutron-plugin-openvswitch-agent
+   - openvswitch-switch
+
+#######network#interfaces########
+- name: copy interfaces
+  template: src=interfaces
+            dest=/etc/network
+
+- name: copy ovsctrl-add.sh to add br-int,br-ex and br-eth1
+  file: src=ovsctrl-add.sh
+        dest=/root
+        mode=755
+## we have not create network pool
+#######network#interfaces########

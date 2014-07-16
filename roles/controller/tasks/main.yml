@@ -39,6 +39,7 @@
 - name: set the password for mysql
   mysql_user: name=root
               password={{ password }}
+
 ##crete keystone database and change the priviledge##
 - name: create keystone db
   mysql_db: name=keystone
@@ -48,7 +49,7 @@
 
 - name: change privilege 
   mysql_user: name=keystone 
-              password={{ keystone_dbpass}}
+              password={{ keystone_dbpass }}
               priv=keystone.*:ALL
               host={{ item }}
               login_user=root
@@ -58,7 +59,7 @@
   with_items:
    - 'localhost'
    - '%'
-####crete keystone database and change the priviledge##
+########################################################
 
 - name: install keystone and pyton-keystoneclient
   apt: pkg={{ item }}
@@ -71,19 +72,223 @@
   template: src=keystone.conf
             dest=/etc/keystone
 
-- name: restart keystone service
-  service: name=keystone
-           state=restarted
-
 - name: delete the keystone sqlite
   file: dest=/var/lib/keystone/keystone.db
         state=absent
 
+- name: restart keystone service
+  service: name=keystone
+           state=restarted
+
 ##populate the Identity service database and create users
 - name: copy the shell to controller
-  template: src=controller.sh
-            dest=/root/
+  template: src=keystone.sh
+            dest=/root
             mode=755
 
 - name: excute the shell
-  command: /bin/bash controller.sh
+  command: /bin/bash keystone.sh
+
+- name: copy admin-openrc.sh 
+  template: src=admin-openrc.sh
+            dest=/root
+            mode=755
+
+- name: copy demo-openrc.sh
+  template: src=demo-openrc.sh
+            dest=/root
+            mode=755
+
+##crete glance database and change the priviledge##
+- name: create glance db
+  mysql_db: name=glance
+            login_user=root
+            login_password={{ password }}
+            login_host=localhost
+
+- name: change privilege 
+  mysql_user: name=keystone 
+              password={{ glance_dbpass}}
+              priv=glance.*:ALL
+              host={{ item }}
+              login_user=root
+              login_password={{ password }}
+              login_host=localhost
+              state=present
+  with_items:
+   - 'localhost'
+   - '%'
+#########################################################3
+###################glance###################
+- name: install glance
+  apt: pkg={{ item }}
+       state=present
+  with_items:
+   - glance
+   - python-glanceclient
+
+- name: copy glance configure files
+  template: scr={{ item }}
+            dest=/etc/glance
+            state=present
+  with_items:
+   - glance-api.conf
+   - glance-registry.conf
+
+- name: delete the glance.sqlite 
+  file: dest=/var/lib/glance/glance.sqlite
+        state=absent
+
+- name: Populate the Image Service database
+  command: su -s /bin/sh -c "glance-manage db_sync" glance
+
+- name: restart galnce service
+  service: name={{ item }}
+           state=restarted
+  with_items:
+   - glance-registry
+   - glance-api
+
+- name: create image service
+  command: glance image-create --name "cirros-0.3.2-x86_64" --file /root/cirros-0.3.2-x86_64-disk.img \
+  --disk-format qcow2 --container-format bare --is-public True --progress
+###################glance###################
+
+##crete nova database and change the priviledge##
+- name: create nova db
+  mysql_db: name=nova
+            login_user=root
+            login_password={{ password }}
+            login_host=localhost
+
+- name: change privilege 
+  mysql_user: name=nova 
+              password={{ nova_dbpass }}
+              priv=nova.*:ALL
+              host={{ item }}
+              login_user=root
+              login_password={{ password }}
+              login_host=localhost
+              state=present
+  with_items:
+   - 'localhost'
+   - '%'
+########################################################
+
+#####################nova###############################
+- name: insall nova packages
+  apt: pkg={{ item }}
+       state=present
+  with_items:
+   - nova-api
+   - nova-cert
+   - nova-conductor
+   - nova-consoleauth
+   - nova-novncproxy
+   - nova-scheduler
+   - ptyhon-novaclient
+
+- name: delete nova.sqlite
+  file: dest=/var/lib/nova/nova.sqlite
+        stete=absent
+
+- name: Populate the Compute database
+  command:  su -s /bin/sh -c "nova-manage db sync" nova
+
+- name: copy nova shells to Compute
+  template: src=nova-service.sh
+            dest=/root
+            mode=755
+
+#####################nova###################################
+
+##crete neutron database and change the priviledge##
+- name: create neutron db
+  mysql_db: name=neutron
+            login_user=root
+            login_password={{ password }}
+            login_host=localhost
+
+- name: change privilege 
+  mysql_user: name=neutron 
+              password={{ neutron_dbpass }}
+              priv=neutron.*:ALL
+              host={{ item }}
+              login_user=root
+              login_password={{ password }}
+              login_host=localhost
+              state=present
+  with_items:
+   - 'localhost'
+   - '%'
+########################################################
+#################ml2+vlan#######################
+- name: install neutron-server and neutron-plugin-ml2
+  apt: name={{ item }}
+       state=present
+  with_items:
+   - neutron-server
+   - neutron-plugin-ml2
+
+- name: delete neutron.sqlite
+  file: dest=/var/lib/neutron/neutron.sqlite
+        state=absent
+
+- name: copy neutron.conf
+  template: src=neutron.conf
+            dest=/etc/neutron/
+            state=present
+
+- name: copy nova files to Compute
+  template: src=nova.conf
+            dest=/etc/nova
+
+- name: restart nova service 
+  service: name={{ item }}
+           state=restarted
+  with_items:
+   - nova-api
+   - nova-cert
+   - nova-consoleauth
+   - nova-scheduler
+   - nova-conductor
+   - nova-novncproxy  
+
+- name: neutron-server restarted
+  service: name=neutron-server
+           state=restarted
+
+#######network#interfaces########
+- name: copy interfaces
+  template: src=interfaces
+            dest=/etc/network
+
+- name: copy ovsctrl-add.sh to add br-int,br-ex and br-eth1
+  file: src=ovsctrl-add.sh
+        dest=/root
+        mode=755
+#######network#interfaces########
+
+###install dashboard#############
+- name: instal dashboard
+  apt: pkg={{ item }}
+       state=present
+  with_items: 
+   - apache2
+   - memcached
+   - libapache2-mod-wsgi
+   - openstack-dashboard
+
+- name: change the OPENSTACK_HOST
+  lineinfile: dest=/etc/openstack-dashboard/local_settings.py
+              regexp="^OPENSTACK_HOST"
+              line='OPENSTACK_HOST = "controller"'
+              backrefs=yes
+
+- name: restarted apache2 and memcached
+  service: name={{ item }}
+           state=restarted
+  with_items:
+   - apache2
+   - memcached
+###install dashboard#############
