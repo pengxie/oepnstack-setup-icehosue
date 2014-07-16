@@ -1,0 +1,16 @@
+---
+controller: 10.10.6.25
+network: 10.10.6.25
+compute: 10.10.6.26
+
+password: aixocm
+keystone_dbpass: aixocm
+rabbit_pass: aixocm
+ADMIN_PASS: aixocm
+EMAIL_ADDRESS: pengxie@anjuke.com
+
+NTP_SERVER: 10.10.6.130
+
+proxy_url: 192.168.1.62
+proxy_port: 3128
+

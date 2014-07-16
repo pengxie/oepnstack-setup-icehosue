@@ -1,0 +1,89 @@
+---
+- name: install ntp server
+  apt: pkg=ntp
+       state=present
+
+- name: Use Ubuntu's local ntp server as a fallback.
+  lineinfile: dest=/etc/ntp.conf
+              regexp="^server+[\s]+[a-z.]+"
+              line='server {{ NTP_SERVER }}'
+              backrefs=yes
+
+- name: start ntp server
+  service: name=ntp
+           state=restarted
+
+- name: message server
+  apt: pkg=rabbitmq-server
+       state=present
+
+- name: change the rabbitmq-server passwd
+  command: rabbitmqctl change_password guest {{ rabbit_pass }}
+
+- name: install mysql server
+  apt: pkg=mysql-server
+       state=present
+
+- name: install python-mysqldb 
+  apt: pkg=python-mysqldb 
+       state=present
+
+- name: cp my.cnf
+  template: src=my.cnf
+            dest=/etc/mysql
+
+- name: restart mysql server
+  apt: name=mysql
+       state=restarted
+
+- name: set the password for mysql
+  mysql_user: name=root
+              password={{ password }}
+##crete keystone database and change the priviledge##
+- name: create keystone db
+  mysql_db: name=keystone
+            login_user=root
+            login_password={{ password }}
+            login_host=localhost
+
+- name: change privilege 
+  mysql_user: name=keystone 
+              password={{ keystone_dbpass}}
+              priv=keystone.*:ALL
+              host={{ item }}
+              login_user=root
+              login_password={{ password }}
+              login_host=localhost
+              state=present
+  with_items:
+   - 'localhost'
+   - '%'
+####crete keystone database and change the priviledge##
+
+- name: install keystone and pyton-keystoneclient
+  apt: pkg={{ item }}
+       state=present
+  with_items:
+   - keystone
+   - python-keystoneclient
+
+- name: copy keystone file
+  template: src=keystone.conf
+            dest=/etc/keystone
+
+- name: restart keystone service
+  service: name=keystone
+           state=restarted
+
+- name: delete the keystone sqlite
+  file: dest=/var/lib/keystone/keystone.db
+        state=absent
+
+##populate the Identity service database and create users
+- name: copy the shell to controller
+  template: src=controller.sh
+            dest=/root/
+            mode=755
+
+- name: excute the shell
+  command: /bin/bash controller.sh

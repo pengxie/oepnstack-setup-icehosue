@@ -1,0 +1,40 @@
+---
+- name: set local dns  for the hosts
+  lineinfile: dest=/etc/hosts
+              line="{{ controller }} controller"
+
+- name: set local dns  for the hosts
+  lineinfile: dest=/etc/hosts
+              line="{{ network }} network"
+
+- name: set local dns  for the hosts
+  lineinfile: dest=/etc/hosts
+              line="{{ compute }} compute"
+
+- name: install python-software-properties
+  apt: pkg=python-software-properties
+       state=present
+
+- name: add clound repro for ubuntu12.04
+  command: /usr/bin/add-apt-repository cloud-archive:icehouse -y
+
+# if your compute cant access the internet you shouldn't do this
+- name: make sure the apt.conf exists
+  file: path=/etc/apt/apt.conf
+        state=touch
+
+- name: set the proxy for compute
+  lineinfile: dest=/etc/apt/apt.conf
+              line="Acquire::http:Proxy \"http://{{ proxy_url }}:{{ proxy_port }}\";"
+
+- name: update apt-cached
+  apt: update_cache=yes
+
+# If you intend to use OpenStack Networking with Ubuntu 12.04,install 
+# Linux kernel to improve the stability of your system
+#- name : install 13.01 kernel
+#  apt: pkg={{ item }}
+#       state=present
+#  with_item:
+#   - linux-image-generic-lts-saucy 
+#   - linux-headers-generic-lts-saucy
