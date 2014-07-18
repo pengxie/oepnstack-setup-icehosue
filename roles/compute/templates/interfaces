@@ -6,7 +6,7 @@ iface eth1 inet manual
 
 auto br-eth1
 iface br-eth1 inet static
-address {{ network }}
+address {{ compute }}
 netmask 255.255.255.0
 
 auto eth0

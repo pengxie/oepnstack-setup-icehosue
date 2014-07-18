@@ -23,9 +23,9 @@
   file: path=/etc/apt/apt.conf
         state=touch
 
-- name: set the proxy for compute
-  lineinfile: dest=/etc/apt/apt.conf
-              line="Acquire::http:Proxy \"http://{{ proxy_url }}:{{ proxy_port }}\";"
+#- name: set the proxy for compute
+#  lineinfile: dest=/etc/apt/apt.conf
+#              line="Acquire::http:Proxy \"http://{{ proxy_url }}:{{ proxy_port }}\";"
 
 - name: update apt-cached
   apt: update_cache=yes

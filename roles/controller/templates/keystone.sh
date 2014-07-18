@@ -1,3 +1,5 @@
+
+
 #/bin/bash
 #This script is to set base controller environment
 su -s /bin/sh -c "keystone-manage db_sync" keystone
@@ -38,7 +40,7 @@ export OS_AUTH_URL=http://controller:35357/v2.0
 #Create the glance service
 keystone user-create --name=glance --pass={{ glance_pass }} --email={{ EMAIL_ADDRESS }}
 keystone user-role-add --user=glance --tenant=service --role=admin
-keystone user-role-add --user=glance --tenant=service --role=admin
+keystone service-create --name=glance --type=image --description="OpenStack Image Service"
 keystone endpoint-create \
   --service-id=$(keystone service-list | awk '/ image / {print $2}') \
   --publicurl=http://controller:9292 \
@@ -56,9 +58,9 @@ keystone user-role-add --user=nova --tenant=service --role=admin
 keystone service-create --name=nova --type=compute --description="OpenStack Compute"
 keystone endpoint-create \
   --service-id=$(keystone service-list | awk '/ compute / {print $2}') \
-  --publicurl=http://compute:8774/v2/%\(tenant_id\)s \
-  --internalurl=http://compute:8774/v2/%\(tenant_id\)s \
-  --adminurl=http://compute:8774/v2/%\(tenant_id\)s
+  --publicurl=http://controller:8774/v2/%\(tenant_id\)s \
+  --internalurl=http://controller:8774/v2/%\(tenant_id\)s \
+  --adminurl=http://controller:8774/v2/%\(tenant_id\)s
 
 #neutron
 keystone user-create --name neutron --pass {{ neutron_pass }} --email {{ EMAIL_ADDRESS  }}
@@ -69,4 +71,3 @@ keystone endpoint-create \
   --publicurl http://controller:9696 \
   --adminurl http://controller:9696 \
   --internalurl http://controller:9696
-

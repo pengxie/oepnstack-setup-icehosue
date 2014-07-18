@@ -20,7 +20,10 @@
 - name: copy sysctl.conf
   template: src=sysctl.conf
             dest=/etc/
-            state=present
+
+- name: copy network interface
+  template: src=interfaces
+            dest=/etc/network
 
 - name: make sure sysctl.conf effective
   command: sysctl -p 
@@ -36,9 +39,8 @@
    - neutron-dhcp-agent
 
 - name: copy files 
-  file: src={{ item.name }}
+  copy: src={{ item.name }}
         dest=/etc/{{ item.dest }}
-        state=file
   with_items:
    - { name: 'dhcp_agent.ini', dest: 'neutron' }
    - { name: 'l3_agent.ini', dest: 'neutron' }

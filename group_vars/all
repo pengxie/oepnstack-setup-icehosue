@@ -2,7 +2,6 @@
 controller: 10.10.6.25
 network: 10.10.6.25
 compute: 10.10.6.26
-compute_network: 10.10.9.16
 
 gateway: 10.10.9.1
 controller_br_ex_address: 10.10.9.15

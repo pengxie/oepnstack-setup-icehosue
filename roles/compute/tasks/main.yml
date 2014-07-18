@@ -6,12 +6,12 @@
 - name: Use Ubuntu's local ntp server as a fallback.
   lineinfile: dest=/etc/ntp.conf
               regexp="^server+[\s]+[a-z.]+"
-              line='server controller'
+              line="server controller"
               backrefs=yes
 
-- name: start ntp serverice
+- name:start ntp server
   service: name=ntp
-  	       state=present
+           state=restarted
 
 - name: install python-mysqldb - nova
   apt: pkg=python-mysqldb 
@@ -30,9 +30,8 @@
             dest=/etc/nova
 
 - name: copy sysctl.conf
-  file: src=sysctl.conf
+  copy: src=sysctl.conf
         dest=/etc
-        state=present
 
 - name: sysctl effective
   command: sysctl -p
@@ -67,7 +66,7 @@
             dest=/etc/network
 
 - name: copy ovsctrl-add.sh to add br-int,br-ex and br-eth1
-  file: src=ovsctrl-add.sh
+  copy: src=ovsctrl-add.sh
         dest=/root
         mode=755
 ## we have not create network pool
